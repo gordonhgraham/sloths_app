@@ -33,11 +33,10 @@ afterEach(done => {
 });
 
 describe('GET /sloths', () => {
-  it(`respond with JSON`, done => {
+  it('responds with JSON', done => {
     request(app)
-      .get(`/sloths`)
-      .set(`Accept`, `application/json`)
-      .expect(`Content-Type`, /json/)
+      .get('/sloths')
+      .expect('Content-Type', /json/)
       .expect(200, done);
   });
 
@@ -66,8 +65,60 @@ describe('GET /sloths', () => {
   });
 });
 
-describe('GET /sloths/:id', () => {
-  var newSloth = {
+describe(`GET /sloths/:id`, () => {
+  it('responds with JSON', done => {
+    request(app)
+      .get('/sloths')
+      .expect('Content-Type', /json/)
+      .expect(200, done);
+  });
+
+  it(`returns an array with one object with sloth data of id provided`, done => {
+    request(app)
+      .get(`/sloths/1`)
+      .end((err, res) => {
+        expect(res.body).to.depp.equal([{
+          id: 1,
+          name: 'Jerry',
+          age: 4,
+          image: 'https://gifts.worldwildlife.org/gift-center/Images/large-species-photo/large-Three-toed-Sloth-photo.jpg'
+        }]);
+        done();
+      });
+  });
+
+  it(`returns an array with one object with sloth data of id provided`, done => {
+    request(app)
+      .get(`/sloths/2`)
+      .end((err, res) => {
+        expect(res.body).to.depp.equal([{
+          id: 2,
+          name: 'Sally',
+          age: 2,
+          image: 'http://www.wildlifeextra.com/resources/listimg/world/Africa/3_toed_sloth@large.jpg'
+        }]);
+        done();
+      });
+  });
+
+  it(`returns an array with one object with sloth data of id provided`, done => {
+    request(app)
+      .get(`/sloths/3`)
+      .end((err, res) => {
+        expect(res.body).to.depp.equal([{
+          id: 3,
+          name: 'Sawyer',
+          age: 1,
+          image: 'http://www.rainforest-alliance.org/sites/default/files/styles/responsive_breakpoints_theme_rainforest_wide_1x/public/slideshow/header/three-toed-sloth.jpg'
+        }]);
+        done();
+      });
+  });
+
+});
+
+describe('POST /sloths', () => {
+  const newSloth = {
     sloth: {
       id: 4,
       name: 'Veronica',
@@ -84,10 +135,79 @@ describe('GET /sloths/:id', () => {
       .expect('Content-Type', /json/)
       .expect(200, done);
   });
+
+  it('adds the new sloth to the database', done => {
+    request(app)
+      .post('/sloths')
+      .type('form')
+      .send(newSloth)
+      .end((err, res) => {
+        knex('sloths').select().then(sloths => {
+          expect(sloths).to.have.lengthOf(4);
+          expect(sloths).to.deep.include(newSloth.sloth);
+        });
+        done();
+      });
+  });
 });
 
-xdescribe('POST /sloths', () => {});
+describe('PUT /sloths/:id', () => {
+  const updatedSloth = {
+    sloth: {
+      name: 'Homunculus',
+      age: 500,
+      image: 'http://i878.photobucket.com/albums/ab344/TheScav/FMA%20Characters/sloth.png'
+    }
+  };
 
-xdescribe('PUT /sloths/:id', () => {});
+  it('responds with JSON', done => {
+    request(app)
+      .put('/sloths/1')
+      .type('form')
+      .send(updatedSloth)
+      .expect('Content-Type', /json/)
+      .expect(200, done);
+  });
 
-xdescribe('DELETE /sloths/:id', () => {});
+  it('updates the sloth in the database', done => {
+    request(app)
+      .put('/sloths/1')
+      .type('form')
+      .send(updatedSloth)
+      .end((err, res) => {
+        knex('sloths').where('id', 1).first().then(sloth => {
+          expect(sloth.name).to.equal(updatedSloth.sloth.name);
+          expect(sloth.age).to.equal(updatedSloth.sloth.age);
+          expect(sloth.image).to.equal(updatedSloth.sloth.image);
+        });
+        done();
+      });
+  });
+});
+
+xdescribe('DELETE /sloths/:id', () => {
+  const deletedSloth = knex(`sloths`).where(`id`, 1);
+
+  it('responds with JSON', done => {
+    request(app)
+      .delete('/sloths/1')
+      .send(deletedSloth)
+      .expect('Content-Type', /json/)
+      .expect(200, done);
+  });
+
+  it('deletes the sloth from the database', done => {
+    request(app)
+      .put('/sloths/1')
+      .type('form')
+      .send(deletedSloth)
+      .end((err, res) => {
+        knex('sloths').where('id', 1).first().then(sloth => {
+          expect(sloths).to.have.lengthOf(2);
+          expect(sloths).to.deep.exclude(deletedSloth);
+          done();
+        });
+      });
+  });
+
+});
